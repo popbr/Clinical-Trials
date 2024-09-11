@@ -9,6 +9,7 @@ import pandas as pd
 import os
 
 def getStudyData():
+    # study_ids = [ 'NCT00341939']
     study_ids = [
     'NCT01714739','NCT05844007','NCT05780424','NCT03243422','NCT05769322',
     'NCT05831722','NCT06190522','NCT05415722','NCT04525222','NCT05428722',
@@ -28,12 +29,14 @@ def getStudyData():
     # URL of the clinical trial page
     URL = 'https://www.clinicaltrials.gov/study/REPLACE_NCTID?tab=table#recruitment-information'
     RECRUITMENT_TAB=4
+    ADMIN_TAB = 5
 
     # Configure Chrome options for headless browsing
     options = Options()
     options.headless = True
     # Using Dataframe to write to xls
-    df = pd.DataFrame(columns=('study_id', 'ActualEnrollment', 'OriginalEnrollment'))
+    df = pd.DataFrame(columns=('study_id', 'ActualEnrollment', 'OriginalEnrollment',
+                               'StudyStartDate','StudyCompletionDate','CurrentStudySponsor','OriginalStudySponsor'))
     # Start Chrome WebDriver
     for nct_id in study_ids:
         # print("nct_id:: ",nct_id)
@@ -50,41 +53,70 @@ def getStudyData():
 
         # Parse the page source with BeautifulSoup
         soup = BeautifulSoup(page_source, 'html.parser')
-        recruitment_info_section = soup.find_all('div', class_='table', attrs={'_ngcontent-ng-c1086300613': ''})[RECRUITMENT_TAB]
+        all_sections = soup.find_all('div', class_='table', attrs={'_ngcontent-ng-c1086300613': ''})
+        recruitment_section = all_sections[RECRUITMENT_TAB]
+        admin_section = all_sections[ADMIN_TAB]
 
 
         # Get the data for indiviudal study
         dict = {}
         get_next_section = False
         name = ""
-        for section in recruitment_info_section:
+        for section in recruitment_section:
             # Get actual/Estimated enrollment value for dict
             if get_next_section:
                 dict[name] = section.text
-                # print("section.text:: ",section.text)
             get_next_section = False
             # Get actual/Estimated enrollment key for dict
-            if 'Enrollment' in section.text :
-                # print("Enrollment: ",section.text)
+            if 'Enrollment'  in section.text :
+                dict[section.text] = -1
+                name = section.text
+                get_next_section = True
+            elif 'Study Start Date' in section.text :
+                dict[section.text] = -1
+                name = section.text
+                get_next_section = True
+            elif 'Study Completion Date' in section.text :
                 dict[section.text] = -1
                 name = section.text
                 get_next_section = True
 
-        # print(dict)
-        actual_val = -1
-        estimated_val = -1
-        if len(dict) == 2:
-            for key, value in dict.items():
-                # print(key, value)
-                if 'Original' in key:
-                    estimated_val = value
-                elif 'Actual' in key:
-                    actual_val = value
+        get_next_section = False
+        for section in admin_section:
+            # Get actual/Estimated enrollment value for dict
+            if get_next_section:
+                dict[name] = section.text
+            get_next_section = False
+            # Get actual/Estimated enrollment key for dict
+            if 'Sponsor' in section.text :
+                dict[section.text] = -1
+                name = section.text
+                get_next_section = True
 
-            print('study_id: ', nct_id," Actual: ",actual_val, " Estimated: ",estimated_val)
+        actual_val,estimated_val = -1,-1
+        start_date,com_date,current_sponsor,orig_sponsor = '','','',''
+        if len(dict) == 6:
+            for key, value in dict.items():
+                if 'Original Enrollment' in key:
+                    estimated_val = value
+                elif 'Enrollment (Actual)' in key:
+                    actual_val = value
+                elif 'Start' in key:
+                    start_date = value
+                elif 'Completion' in key:
+                    com_date = value
+                elif 'Current Study Sponsor' in key:
+                    current_sponsor = value
+                elif 'Original Study Sponsor' in key:
+                    orig_sponsor = value
+
+            # print('study_id: ', nct_id," Actual: ",actual_val, " Estimated: ",estimated_val)
+            # print('StudyStartDate: ', start_date, " StudyCompletionDate: ", com_date, " CurrentStudySponsor: ", current_sponsor, "OriginalStudySponsor:",orig_sponsor )
             if actual_val != -1 and estimated_val != -1:
                 # print(actual_val, estimated_val)
-                new_row = {'study_id':nct_id,'ActualEnrollment':actual_val,'OriginalEnrollment':estimated_val}
+                new_row = {'study_id':nct_id,'ActualEnrollment':actual_val,'OriginalEnrollment':estimated_val,
+                           'StudyStartDate':start_date, 'StudyCompletionDate':com_date, 'CurrentStudySponsor':current_sponsor,
+                           'OriginalStudySponsor':orig_sponsor}
                 df.loc[len(df)] = new_row
             else:
                 print("**"*10)
@@ -99,12 +131,13 @@ def calDiff():
         print("File exists")
         excel_data_df = pd.read_excel("./output.xlsx", dtype=str,index_col=0)
         excel_data_df['difference'] =  excel_data_df.apply(lambda x: int(x['ActualEnrollment']) - int(x['OriginalEnrollment']) if x['OriginalEnrollment'] != 'Same as current' and str(x['ActualEnrollment']) != 'Same as current' else 0,axis=1)
-        excel_data_df.style.apply(lambda x:(None,None,None,'background-color: green') if x['difference'] >0  else (None,None,None,'background-color: red'), axis=1).to_excel("./new_output.xlsx")
+        excel_data_df.style.apply(lambda x:(None,None,None,'background-color: green',None,None,None,None) if x['difference'] >0  else (None,None,None,'background-color: red',None,None,None,None), axis=1).to_excel("./new_output.xlsx")
         # print(excel_data_df)
 
     else:
         print("File does not exist")
 
 if __name__ == "__main__":
+    getStudyData()
     calDiff()
 
