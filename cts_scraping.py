@@ -10,6 +10,8 @@ import requests
 import os
 import argparse
 from datetime import datetime
+import warnings
+warnings.simplefilter('always')
 
 study_ids = []
 RECRUITMENT_TAB = 4
@@ -71,9 +73,14 @@ def get_study_data():
     url = 'https://www.clinicaltrials.gov/study/REPLACE_NCTID?tab=table#recruitment-information'
     options = Options()
     options.headless = True
+    sum_est_enrollment = 0
+    sum_actual_enrollment = 0
+    num_studies = 0
+    act_avg = 0
+    est_avg = 0
     # Using Dataframe to write to xls
     df = pd.DataFrame(columns=('study_id', 'ActualEnrollment', 'OriginalEnrollment',
-                               'StudyStartDate','StudyCompletionDate','CurrentStudySponsor','OriginalStudySponsor','Collaborators'))
+                               'StudyStartDate','StudyCompletionDate','CurrentStudySponsor','OriginalStudySponsor','Collaborators','difference'))
     # Start Chrome WebDriver
     for nct_id in study_ids:
         # print("nct_id:: ",nct_id)
@@ -155,22 +162,51 @@ def get_study_data():
         # print('Collaborators: ',collaborators)
         if actual_val != -1 and estimated_val != -1:
             # print(actual_val, estimated_val)
+            a_val,e_val=0,0
+            if isinstance(estimated_val, str) and "current" not in estimated_val:
+                sum_est_enrollment += int(estimated_val)
+                a_val = int(estimated_val)
+            elif ((isinstance(estimated_val, str) and "current" in estimated_val) and
+                  (isinstance(actual_val, str) and "current" not in actual_val)):
+                sum_est_enrollment += int(actual_val)
+                a_val = int(actual_val)
+
+            if isinstance(actual_val, str) and "current" not in actual_val:
+                sum_actual_enrollment += int(actual_val)
+                e_val= int(actual_val)
+            elif ((isinstance(actual_val, str) and "current" in actual_val) and
+                 (isinstance(estimated_val, str) and "current" not in estimated_val)):
+                sum_actual_enrollment += int(estimated_val)
+                e_val= int(estimated_val)
             new_row = {'study_id':nct_id,'ActualEnrollment':actual_val,'OriginalEnrollment':estimated_val,
                        'StudyStartDate':start_date, 'StudyCompletionDate':com_date, 'CurrentStudySponsor':current_sponsor,
-                       'OriginalStudySponsor':orig_sponsor,'Collaborators':collaborators}
+                       'OriginalStudySponsor':orig_sponsor,'Collaborators':collaborators,'difference':a_val-e_val}
             df.loc[len(df)] = new_row
+            num_studies += 1
+
         else:
             print("**"*10)
             print("Error:: Data not entered for id: ",nct_id)
             print("Values in dict: ",dict)
         time.sleep(1)
+    if num_studies > 1:
+        act_avg = sum_actual_enrollment/num_studies
+        est_avg = sum_est_enrollment/num_studies
+    # print("num_studies: ", num_studies)
+    # print("sum_est_enrollment: ", sum_est_enrollment)
+    # print("sum_actual_enrollment: ", sum_actual_enrollment)
+    # print("act_avg: ", act_avg)
+    # print("est_avg: ", est_avg)
+    if est_avg > 0.0 and act_avg > 0.0:
+        df.rename(columns={"ActualEnrollment":f'ActualEnrollment Avg: {act_avg:.2f}', "OriginalEnrollment":f'OriginalEnrollment Avg: {est_avg:.2f}'}, inplace=True)
+    # print(df.columns)
     df.to_excel("output.xlsx")
 
 def cal_diff():
     if os.path.exists("./output.xlsx"):
         excel_data_df = pd.read_excel("./output.xlsx", dtype=str,index_col=0)
-        excel_data_df['difference'] =  excel_data_df.apply(lambda x: int(x['ActualEnrollment']) - int(x['OriginalEnrollment']) if x['OriginalEnrollment'] != 'Same as current' and str(x['ActualEnrollment']) != 'Same as current' else 0,axis=1)
-        excel_data_df.style.apply(lambda x:(None,None,None,None,None,None,None,None,'background-color: green') if x['difference'] >=0 else (None,None,None,None,None,None,None,None,'background-color: red'), axis=1).to_excel("./new_output.xlsx")
+        # excel_data_df['difference'] =  excel_data_df.apply(lambda x: int(x['ActualEnrollment']) - int(x['OriginalEnrollment']) if x['OriginalEnrollment'] != 'Same as current' and str(x['ActualEnrollment']) != 'Same as current' else 0,axis=1)
+        excel_data_df.style.apply(lambda x:(None,None,None,None,None,None,None,None,'background-color: green') if int(x['difference']) >=0 else (None,None,None,None,None,None,None,None,'background-color: red'), axis=1).to_excel("./new_output.xlsx")
     else:
         print("File does not exist")
 
