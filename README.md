@@ -19,6 +19,12 @@ This project processes clinical data from https://clinicaltrials.gov/, specifica
 
 ## Set up
 
+### For Windows Beginners
+
+*To be written*
+
+### For Linux experts
+
 ```
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt 
