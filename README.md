@@ -20,8 +20,9 @@ This project processes clinical data from https://clinicaltrials.gov/, specifica
 ## Set up
 
 ### For Windows Beginners
-1) Open Windows PowerShell
-2) Type these commands including any spaces but not including brackets
+1) Find the repository in File Explorer (look for a folder called clinical-trials and contains this file) once found click on the search bar on the top press ctrl + c to copy the path to the repository (It should start with C: )
+2) Open Windows PowerShell
+3) Type these commands including any spaces but not including brackets
 ```py
 cd [PathToRepository] # this takes power shell to where the files you want to run are stored
 python -m venv venv # this opens up a virtual environment
