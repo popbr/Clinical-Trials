@@ -22,7 +22,7 @@ This project processes clinical data from https://clinicaltrials.gov/, specifica
 ### For Windows Beginners
 1) Open Windows PowerShell
 2) Type these commands including any spaces but not including brackets
-```
+```py
 cd [PathToRepository] //this takes power shell to where the files you want to run are stored
 python -m venv venv //this opens up a virtual environment
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process //this allow you to run scripts the -scope process part means the execution policy will one be unresticted for the instance of powershell meaning when you close out or open a new tab in powershell it will return to normal
