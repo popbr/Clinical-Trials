@@ -29,7 +29,7 @@ This project processes clinical data from https://clinicaltrials.gov/, specifica
    - ` [PathToRepository]` with the path you identified previously.
    - `"[NameOfAuthor]" [StartDate] [EndDate]` with the name of the author, and a date range (e.g., `"Bristol-Myers" 01/01/2023 06/12/2024`)
 
-```text
+```bash
 cd [PathToRepository] # this takes power shell to where the files you want to run are stored
 python -m venv venv # this opens up a virtual environment
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process # this allow you to run scripts the -scope process part means the execution policy will one be unresticted for the instance of powershell meaning when you close out or open a new tab in powershell it will return to normal
