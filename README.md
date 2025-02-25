@@ -28,7 +28,6 @@ This project processes clinical data from https://clinicaltrials.gov/, specifica
 
    - ` [PathToRepository]` with the path you identified previously.
    - `"[NameOfAuthor]" [StartDate] [EndDate]` with the name of the author, and a date range (e.g., `"Bristol-Myers" 01/01/2023 06/12/2024`)
-   - 
 
 ```text
 cd [PathToRepository] # this takes power shell to where the files you want to run are stored
