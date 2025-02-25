@@ -33,7 +33,7 @@ py -m pip install -r requirements.txt # installs requirments for program
 py -i cts_scraping.py "Bristol-Myers" 01/01/2023 06/12/2024 # this will actually run the program follow the format -i cts_scraping.py "[NameOfAuthor]" [StartDate] [EndDate]
 # note that the particular example above will take a while to run, about several minutes
 ```
-3) open the output file in the clinical trials folder and it should have all the data filled in
+4) open the output file in the clinical trials folder and it should have all the data filled in
 
 ### For Linux experts
 
